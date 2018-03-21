@@ -1,12 +1,23 @@
 language: go
-go:
-  - 1.8.x
-  - 1.9.x
-script:
-  - wget -O dep https://github.com/golang/dep/releases/download/v0.3.2/dep-linux-amd64
-  - chmod +x dep
-  - ./dep ensure
-  - ./test.sh
 sudo: false
+go:
+  - "1.10.x"
+
+env:
+  global:
+  - REPO=everesio/oauth2_proxy
+  - secure: "Egv9T/RGIR79YYcf6meAiQ5pDfVvMP1Z35PugfY1BO6fs6s2D/VnkihWawfN80l+PwtJquvd8KoVOd3FrgR1vCc9hmcRDmzQX0siiFgUliVP/pi65sP3ki4o5WPhzBFTX0SBdEe8Xm892eReHk1cUDkWUwKSJedu99fuikvLYNZXtAsq98Odq7V8vXZ9z7jRcM0njY4+gY3m96fu2753ywY5PSZdBpIr3ZkaZzhN0INPwNIUu9KyKGduZDacPoM7dVGdfEOWTnCuabTxulv0i5HRpETwheH1xV7+nxqoWPktKF2W+XWvOWsspbDsUKzS4pkuy+Xr7Q2TAuEaxktKw1rMH/X76F3rlGecsvY687/s/vzInL2goFrZRQsjl0NEiZiY/FH/gKlxyx/Hjr1J5zhrbatPO7y5zCB4Mm5pJwl/SEpeD17iwrNEEV6cviyYOn6Gjt9GMH5SiFKupl7ddofMLqmD/WrO4pNuvAruS5R40jJkRuL0WpwIsSBGrHbpX7HFd2vztYYOW9mTZqxVuNkVvkywQw24g42aG+c4nmbqizSdnwNxDcXR66PGz/B0znLJmx1yxXC/MniAf24GZV03lhTUrCsIPBUnwONfGNbmqJrV16dDa9/Se1XRPKyelawOxlwXiVugS6ryg3acK3NpcPe7ej5XDx4okp18RN8="
+  - secure: "ayXpgZDftkoGbPwuCB9wcaCW3pvo6M14f9Wlv0ofMNroz9rBrQSKjje6bIcA7vTTykisD9FBaDKDWCI1sdyVGq2QYPSEa14BUxp2XlM56ZrwLhora77EkEdhl74MFsBTT8ore4u+VAYUEQ+EmBxL4d12YKPbJUzdxl0gWthrMKPKVkITcOS+nX3JHoEmgOy1yyh65pzRiooHZPYZXD83Ca0X/oFjhgGzJ03/8OrIW/QdjVu2wZAGLIJGubq0Txvdoa6EQROai+YN7gzeY6qK9R37+gUCn9bHBhbB7oKic22lw06FhvXJ1Tj/VMjerURVdniU95yEd/eKJE2LMBTd+ZneIcmFlWVLYc3QAgC/83eS1TonfmfZIYwCOrRgcibSzCpfeMlII9EGqRNIf2TtjFAbKv0GFWRKYF73T5s9/kGfXUptDmCAvo3z47E/KkOJFaBuqoXcjZCDLzO9YA5Zalux2lLjD90nUOsqCBQUhT8psK6WeK8NHTHamm1kZLpk5MPyihhVyPJcW0qZZExcVULgCUQzZYAIWuohd1yvN1NGc5jTeGK62euOYqaCxXaVNt41lQPeNERtyYbhusP/LOoR4X1YwT3/7iO9zVhZekzDIBaTDJoROeFMudzT1lUP/R1wOROW3BDVBku5xh3RngeA+4X1VA/aotjt7yiYFgk="
+services:
+  - docker
+script:
+  - export TAG=`if [[ $TRAVIS_PULL_REQUEST == "false" ]] && [[ $TRAVIS_BRANCH == "master" ]]; then echo "latest"; else echo "${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_BRANCH}}"; fi`
+  - docker build -t $REPO:$TAG -f Dockerfile .
+after_success:
+  - docker login -u $DOCKER_USER -p $DOCKER_PASS
+  - if [[ $TRAVIS_PULL_REQUEST == "false" ]] && [[ $TRAVIS_BRANCH == "master" ]]; then
+       docker tag $REPO:$TAG $REPO:$TRAVIS_BUILD_NUMBER; docker push $REPO:$TRAVIS_BUILD_NUMBER;
+    fi
+  - docker push $REPO:$TAG
 notifications:
   email: false
